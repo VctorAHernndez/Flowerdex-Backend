@@ -29,15 +29,16 @@ Route::post('/token', function (Request $request) {
 
     if (!$user || !Hash::check($request->string('password'), $user->password)) {
         throw ValidationException::withMessages([
-            'error' => ['The provided credentials are incorrect'],
+            'email' => ['The provided credentials are incorrect'],
         ]);
     }
 
     // TODO: revoke depending on device type (i.e. mobile, web, native, etc.)
     $user->tokens()->delete();
 
-    // TODO; somehow remove the prefix of the plaintextoken
-    return $user->createToken('universal-login-token')->plainTextToken;
+    [, $token] = explode('|', $user->createToken('universal-login-token')->plainTextToken);
+
+    return ['token' => $token];
 });
 
 Route::post('/signup', function (Request $request) {
@@ -51,7 +52,7 @@ Route::post('/signup', function (Request $request) {
 
     if ($existingUser) {
         throw ValidationException::withMessages([
-            'error' => ['User with provided credentials already exists'],
+            'email' => ['User with provided credentials already exists'],
         ]);
     }
 
@@ -61,8 +62,9 @@ Route::post('/signup', function (Request $request) {
     $newUser->password = Hash::make($request->string('password'));
     $newUser->save();
 
-    // TODO; somehow remove the prefix of the plaintextoken
-    return $newUser->createToken('universal-login-token')->plainTextToken;
+    [, $token] = explode('|', $newUser->createToken('universal-login-token')->plainTextToken);
+
+    return ['token' => $token];
 });
 
 Route::get('/user', function (Request $request) {
