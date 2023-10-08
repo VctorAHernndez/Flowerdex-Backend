@@ -4,6 +4,7 @@ use App\Http\Controllers\FlowersController;
 use App\Http\Controllers\FlowerLikesController;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
@@ -64,7 +65,7 @@ Route::post('/signup', function (Request $request) {
 
     [, $token] = explode('|', $newUser->createToken('universal-login-token')->plainTextToken);
 
-    return ['token' => $token];
+    return response()->json(['token' => $token], Response::HTTP_CREATED);
 });
 
 Route::get('/user', function (Request $request) {

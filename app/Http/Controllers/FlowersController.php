@@ -11,7 +11,7 @@ class FlowersController extends Controller
      * 
      * @return \Illuminate\Http\Response
      */
-    // TODO: check if the user has already liked it or has found it already
+    // TODO: filter depending on other properties
     public function index() {
         return Flower::orderBy('created_at', 'desc')->paginate(20);
     }
@@ -22,8 +22,6 @@ class FlowersController extends Controller
      * @param string  $id
      * @return \Illuminate\Http\Response
      */
-    // TODO: check if the user has already liked it or has found it already
-    // TODO: handle fail case
     public function show(string $id) {
         return Flower::findOrFail($id);
     }
