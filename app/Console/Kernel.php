@@ -12,10 +12,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
-
         // Delete tokens that have already been expired for at least 24 hours
         $schedule->command('sanctum:prune-expired --hours=24')->daily();
+
+        // Perform backup of Trefle models
+        $schedule->command('trefle-backup')->daily();
     }
 
     /**

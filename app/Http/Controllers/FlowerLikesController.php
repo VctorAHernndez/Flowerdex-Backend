@@ -13,8 +13,8 @@ class FlowerLikesController extends Controller
      */
     public function index()
     {
-        $user_id = auth()->user()->id;
-        return FlowerLike::where('user_id', $user_id)->orderBy('created_at', 'desc')->paginate(20);
+        $userId = auth()->user()->id;
+        return FlowerLike::where('user_id', $userId)->orderBy('created_at', 'desc')->paginate(20);
     }
 
     /**
@@ -42,7 +42,7 @@ class FlowerLikesController extends Controller
     public function destroy(string $id) {
         $like = FlowerLike::findOrFail($id);
 
-        if ($like->user_id != auth()->user()->id) {
+        if ($like->user_id !== auth()->user()->id) {
             return response(null, Response::HTTP_FORBIDDEN);
         }
 
