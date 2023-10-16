@@ -8,6 +8,7 @@ use App\Models\DivisionGenus;
 use App\Models\DivisionKingdom;
 use App\Models\DivisionOrder;
 use App\Models\DivisionPhylum;
+use App\Models\DivisionSpecies;
 use App\Models\DivisionSubkingdom;
 use App\Services\TrefleClient;
 use Illuminate\Bus\Queueable;
@@ -164,9 +165,9 @@ class TrefleBackup implements ShouldQueue
     /**
      * Backs up Orders from Trefle's API.
      */
-    private function handleOrderBackup(): void
+    private function handleOrderBackup(int $startingPage = 1): void
     {
-        $currentPage = 1;
+        $currentPage = $startingPage;
 
         do {
             $json = $this->api->getOrders($currentPage);
@@ -197,9 +198,9 @@ class TrefleBackup implements ShouldQueue
     /**
      * Backs up Families from Trefle's API.
      */
-    private function handleFamilyBackup(): void
+    private function handleFamilyBackup(int $startingPage = 1): void
     {
-        $currentPage = 1;
+        $currentPage = $startingPage;
 
         do {
             $json = $this->api->getFamilies($currentPage);
@@ -236,9 +237,9 @@ class TrefleBackup implements ShouldQueue
     /**
      * Backs up Genera from Trefle's API.
      */
-    private function handleGenusBackup(): void
+    private function handleGenusBackup(int $startingPage = 1): void
     {
-        $currentPage = 1;
+        $currentPage = $startingPage;
 
         do {
             $json = $this->api->getGenera($currentPage);
@@ -275,10 +276,57 @@ class TrefleBackup implements ShouldQueue
     }
 
     /**
+     * Backs up Species from Trefle's API.
+     */
+    private function handleSpeciesBackup(int $startingPage = 1): void
+    {
+        $currentPage = $startingPage;
+
+        do {
+            $json = $this->api->getSpecies($currentPage);
+
+            $totalResults = $json['meta']['total'];
+
+            foreach($json['data'] as $data) {
+                $species = DivisionSpecies::where(['trefle_id' => $data['id']])->first();
+
+                if (!$species) {
+                    $species = new DivisionSpecies;
+                }
+
+                $species->common_name = $data['common_name'];
+                $species->slug = $data['slug'];
+                $species->scientific_name = $data['scientific_name'];
+                $species->year = $data['year'];
+                $species->image_url = $data['image_url'];
+                $species->synonyms = json_encode($data['synonyms']);
+                $species->trefle_id = $data['id'];
+
+                // Some Species have no Genus in the API
+                // if ($data['genus_id'] !== NULL) {
+                $genus = DivisionGenus::where('trefle_id', $data['genus_id'])->first();
+                $species->division_genus_id = $genus->id;
+                // } else {
+                //     $species->division_genus_id = NULL;
+                // }
+
+                $species->save();
+            }
+
+            // Sleep before making another network call
+            sleep(TrefleBackup::INTER_API_CALL_SLEEP_IN_SECONDS);
+
+            $currentPage += 1;
+        } while (($currentPage - 1) * TrefleBackup::PAGE_SIZE < $totalResults);
+    }
+
+    /**
      * Execute the job.
      */
     // NOTE: this do-while approach might fail in the case where $totalResults changes
     // TODO: spit out logs when each step has success
+    // TODO: each of these functions could be handled in succession as separate tasks, instead of under a single process
+    // TODO: increase timeout in genus? actually decrease and make each request retryable by handling ConnectionException
     public function handle(): void
     {
         // TODO: should we record each time a FK changes?
@@ -292,7 +340,6 @@ class TrefleBackup implements ShouldQueue
         $this->handleOrderBackup(); // 93
         $this->handleFamilyBackup(); // 683 total -> 6 (where division_order_id is not null)
         $this->handleGenusBackup(); // 16508 -> 484 (where division_family_id is null)
-
-        // TODO: do it for flowers too!!!! (what's the difference between Plant/Species)
+        $this->handleSpeciesBackup(3572); // 489358
     }
 }

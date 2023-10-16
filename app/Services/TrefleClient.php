@@ -14,7 +14,7 @@ class TrefleClient
     private const ORDERS_ENDPOINT = '/division_orders';
     private const FAMILIES_ENDPOINT = '/families';
     private const GENERA_ENDPOINT = '/genus';
-    // private const PLANTS_ENDPOINT = '/plants';
+    private const SPECIES_ENDPOINT = '/species';
 
     private const SEARCH_ENDPOINT = '/plants/search';
 
@@ -105,6 +105,18 @@ class TrefleClient
         ];
 
         $response = Http::withQueryParameters($queryParams)->get(TrefleClient::URI.TrefleClient::GENERA_ENDPOINT);
+
+        return $response->json();
+    }
+
+    public function getSpecies(int $page = 1)
+    {
+        $queryParams = [
+            'token' => $this->token,
+            'page' => $page,
+        ];
+
+        $response = Http::withQueryParameters($queryParams)->get(TrefleClient::URI.TrefleClient::SPECIES_ENDPOINT);
 
         return $response->json();
     }
