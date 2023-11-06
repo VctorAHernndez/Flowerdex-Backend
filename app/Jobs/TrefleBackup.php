@@ -302,13 +302,8 @@ class TrefleBackup implements ShouldQueue
                 $species->synonyms = json_encode($data['synonyms']);
                 $species->trefle_id = $data['id'];
 
-                // Some Species have no Genus in the API
-                // if ($data['genus_id'] !== NULL) {
                 $genus = DivisionGenus::where('trefle_id', $data['genus_id'])->first();
                 $species->division_genus_id = $genus->id;
-                // } else {
-                //     $species->division_genus_id = NULL;
-                // }
 
                 $species->save();
             }
@@ -340,6 +335,6 @@ class TrefleBackup implements ShouldQueue
         $this->handleOrderBackup(); // 93
         $this->handleFamilyBackup(); // 683 total -> 6 (where division_order_id is not null)
         $this->handleGenusBackup(); // 16508 -> 484 (where division_family_id is null)
-        $this->handleSpeciesBackup(3572); // 489358
+        $this->handleSpeciesBackup(); // 489358
     }
 }
